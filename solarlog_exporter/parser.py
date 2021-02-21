@@ -1,18 +1,16 @@
 import logging
 import os
-from datetime import timezone, datetime
 
 import pyjsparser
-import pytz
 
-import settings
-from solarlog_exporter.line import Inverter, DayDatapoint
+from solarlog_exporter.utils import Inverter, MinDatapoint, DayDatapoint
 
 
 class FileType:
-    DAY = 1
-    MONTH = 2
-    YEAR = 3
+    MIN = 1
+    DAY = 2
+    MONTH = 3
+    YEAR = 4
 
 
 class ConfigParser:
@@ -20,8 +18,9 @@ class ConfigParser:
 
     def __init__(self, config_path):
         self._config_path = config_path
+        self._parse_config()
 
-    def parse_config(self):
+    def _parse_config(self):
         f = open(self._config_path, "r")
         _parsed_config = pyjsparser.parse(f.read())
 
@@ -72,9 +71,9 @@ class ConfigParser:
 
 
 class DataParser:
-    _inverters = []
-
     def __init__(self, config_parser):
+        self._inverters = []
+
         if config_parser.get_number_of_inverters == 0:
             raise Exception("No inverter in config found!")
 
@@ -98,8 +97,12 @@ class DataParser:
         for i in range(1, len(parts)):
             values = parts[i].split(";")
 
-            if file_type == FileType.DAY:
-                datapoint = DayDatapoint(date_time, values[0], values[1], values[2], values[3])
+            if file_type == FileType.MIN:
+                datapoint = MinDatapoint(date_time, values[0], values[1], values[2], values[3],
+                                         values[4] if (len(values) > 4) else 0)
+                self._inverters[i - 1].add_datapoint(datapoint)
+            elif file_type == FileType.DAY:
+                datapoint = DayDatapoint(date_time, values[0])
                 self._inverters[i - 1].add_datapoint(datapoint)
             elif file_type == FileType.MONTH:
                 pass
@@ -108,17 +111,19 @@ class DataParser:
             else:
                 logging.error("This filetype is not supported!")
 
-    def get_influx_datapoints(self):
+    def get_inverter_datapoints_to_influx(self):
         datapoints = []
 
         for inverter in self._inverters:
-            datapoints += inverter.get_influx_datapoints()
+            datapoints += inverter.get_datapoints_to_influx()
 
         return datapoints
 
 
 def get_filetype(line):
     if line.startswith("m[mi++]="):
+        return FileType.MIN
+    elif line.startswith("da[dx++]="):
         return FileType.DAY
     elif line.startswith("mo[mx++]="):
         return FileType.MONTH

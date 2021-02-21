@@ -1,17 +1,26 @@
-import pyjsparser
+from influxdb import InfluxDBClient
 
 from solarlog_exporter.parser import ConfigParser, DataParser
 
 if __name__ == "__main__":
     # Read Configs
     config_parser = ConfigParser("testfiles/base_vars.js")
-    config_parser.parse_config()
 
     # Parse Data of Solar Log
-    data_parser = DataParser(config_parser)
-    data_parser.parse_file("testfiles/min200606.js")
-    influx_data = data_parser.get_influx_datapoints()
+    min_parser = DataParser(config_parser)
+    min_parser.parse_file("testfiles/min_day.js")
+    influx_data = min_parser.get_inverter_datapoints_to_influx()
+
+    day_parser = DataParser(config_parser)
+    day_parser.parse_file("testfiles/days.js")
+    influx_data_mon = day_parser.get_inverter_datapoints_to_influx()
 
     # Store it in Influx DB
+    client = InfluxDBClient('localhost', 8086, 'root', 'root', 'example')
 
-    print(influx_data)
+    client.drop_database('example')
+    client.create_database('example')
+    client.write_points(influx_data)
+    client.write_points(influx_data_mon)
+
+    #print(influx_data)

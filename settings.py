@@ -1,4 +1,0 @@
-TIMEZONE = 'Europe/Berlin'
-
-
-

@@ -1,0 +1,8 @@
+TIMEZONE = 'Europe/Berlin'
+
+INFLUX_HOST = ""
+INFLUX_PORT = ""
+INFLUX_USERNAME = ""
+INFLUX_PASSWORD = ""
+INFLUX_DB = ""
+
