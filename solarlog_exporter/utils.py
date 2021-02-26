@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 import pytz as pytz
@@ -71,42 +72,45 @@ class Inverter:
     Inverter Object
     """
     def __init__(self, inverter_config):
-        self._datapoints_min = []
-        self._datapoints_day = []
+        self._datapoints_min = {}
+        self._datapoints_day = {}
 
         self.name = inverter_config[4]
+        if re.match(r"WR \d*", self.name):
+            self.name = self.name[:3] + self.name[3:].zfill(2)
         self.type = inverter_config[0]
         self.power = inverter_config[2]
-
         self.sum_pdc = 0
         self.efficiency = 0
 
-    def add_datapoint(self, datapoint):
+    def add_datapoint(self, datapoint, last_record_time):
+        if datapoint.date_time < last_record_time:
+            return
+
         if datapoint.type == FileType.MIN:
-            self._datapoints_min.append(datapoint)
+            self._datapoints_min[datapoint.date_time] = datapoint
         elif datapoint.type == FileType.DAY:
-            self._datapoints_day.append(datapoint)
+            self._datapoints_day[datapoint.date_time.date()] = datapoint
 
     def get_datapoints_to_influx(self):
         self._add_values_to_datapoint()
         influx_datapoints = []
 
-        for datapoint in self._datapoints_min:
-            influx_datapoints.append(datapoint.get_datapoint_to_influx(self.name))
+        for key, value in self._datapoints_min.items():
+            influx_datapoints.append(value.get_datapoint_to_influx(self.name))
 
-        for datapoint in self._datapoints_day:
-            influx_datapoints.append(datapoint.get_datapoint_to_influx(self.name))
+        for key, value in self._datapoints_day.items():
+            influx_datapoints.append(value.get_datapoint_to_influx(self.name))
 
         return influx_datapoints
 
     def _add_values_to_datapoint(self):
-        for datapoint_day in self._datapoints_day:
-            for datapoint_min in self._datapoints_min:
-                if datapoint_min.date_time.date() == datapoint_day.date_time.date():
-                    # todo: make this faster (performance very bad)
-                    # todo: work with indexes??
-                    datapoint_day.add_pdc(datapoint_min.date_time, datapoint_min.pdc)
-            datapoint_day.calculate_values()
+        for datapoint_min in self._datapoints_min.values():
+            if datapoint_min.date_time.date() in self._datapoints_day:
+                self._datapoints_day[datapoint_min.date_time.date()].add_pdc(datapoint_min.date_time, datapoint_min.pdc)
+
+        for key, value in self._datapoints_day.items():
+            value.calculate_values()
 
 
 class Datapoint:

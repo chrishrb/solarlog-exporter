@@ -15,12 +15,8 @@ class SFTPConnection:
     def __init__(self, host, username, password):
         self._sftp = pysftp.Connection(host=host, username=username, password=password)
 
-    def _list_solarlog_files_since(self, influx_client):
+    def _list_solarlog_files_since(self, influx_client, last_record_time):
         last_record_time = get_last_record_time_influxdb(influx_client)
-
-        # if no last_record then get last 5 years
-        if last_record_time is None:
-            last_record_time = datetime.now() - timedelta(days=1 * 365)
 
         since_filename = last_record_time.strftime("min%y%m%d.js")
         today_filename = datetime.now().strftime("min%y%m%d.js")
@@ -33,8 +29,8 @@ class SFTPConnection:
             elif filename == "days_hist.js" and datetime.now().date() != last_record_time.date():
                 self._files.append("days_hist.js")
 
-    def get_solarlog_files(self, influx_client):
-        self._list_solarlog_files_since(influx_client)
+    def get_solarlog_files(self, influx_client, last_record_time):
+        self._list_solarlog_files_since(influx_client, last_record_time)
         clear_tmp_dir()
 
         for file in self._files:
@@ -60,7 +56,8 @@ def get_last_record_time_influxdb(influx_client):
         time = result_last_point_query[0][0]['time']
         return datetime.fromisoformat(time[:-1]).astimezone(pytz.utc)
     else:
-        return None
+        # no last record found
+        return datetime.now(pytz.utc) - timedelta(days=1 * 365)
 
 
 def chunks(input_list, n):

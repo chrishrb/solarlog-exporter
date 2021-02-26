@@ -82,8 +82,9 @@ class DataParser(Parser):
     Simple parser for minute and day-data
     """
 
-    def __init__(self, inverters):
+    def __init__(self, inverters, last_record_time):
         self._inverters = inverters
+        self._last_record_time = last_record_time
 
     def _parse_line(self, line):
         file_type = FileType.get_filetype(line)
@@ -100,10 +101,10 @@ class DataParser(Parser):
             if file_type == FileType.MIN:
                 datapoint = MinDatapoint(date_time, values[0], values[1], values[2], values[3],
                                          values[4] if (len(values) > 4) else 0)
-                self._inverters.get_inverter(i - 1).add_datapoint(datapoint)
+                self._inverters.get_inverter(i - 1).add_datapoint(datapoint, self._last_record_time)
             elif file_type == FileType.DAY:
                 datapoint = DayDatapoint(date_time, values[0])
-                self._inverters.get_inverter(i - 1).add_datapoint(datapoint)
+                self._inverters.get_inverter(i - 1).add_datapoint(datapoint, self._last_record_time)
             elif file_type == FileType.MONTH:
                 pass
             elif file_type == FileType.YEAR:

@@ -4,19 +4,23 @@ import os
 from influxdb import InfluxDBClient
 
 from solarlog_exporter import settings, file_handler
-from solarlog_exporter.file_handler import SFTPConnection
+from solarlog_exporter.file_handler import SFTPConnection, get_last_record_time_influxdb
 from solarlog_exporter.parser import ConfigParser, DataParser
 
 if __name__ == "__main__":
     influx_client = InfluxDBClient(settings.INFLUX_HOST, settings.INFLUX_PORT, settings.INFLUX_USERNAME,
                                    settings.SFTP_PASSWORD, settings.INFLUX_DB)
 
+    influx_client.drop_database("example")
+    influx_client.create_database("example")
+
     inverters = None
+    last_record_time = get_last_record_time_influxdb(influx_client)
     logging.debug("Starting..")
 
     if settings.CLIENT == "SFTP":
         sftp_client = SFTPConnection(settings.SFTP_HOST, settings.SFTP_USERNAME, settings.SFTP_PASSWORD)
-        sftp_client.get_solarlog_files(influx_client)
+        sftp_client.get_solarlog_files(influx_client, last_record_time)
         logging.info("Getting data from SFTP Server")
         del sftp_client
 
@@ -30,10 +34,8 @@ if __name__ == "__main__":
         exit(1)
 
     # Read Daily and Monthly Data
-    data_parser = DataParser(inverters)
+    data_parser = DataParser(inverters, last_record_time)
     for file in os.listdir(settings.CLIENT_DIR):
-        # todo: first read days.js and days_hist.js and then min files
-        # todo: change concept here
         if file.startswith("min") or file.startswith("days"):
             logging.debug("Read file %s", file)
             data_parser.parse_file(settings.CLIENT_DIR + "/" + file)
