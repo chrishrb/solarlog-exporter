@@ -28,6 +28,14 @@ class FileType:
             return None
 
 
+class Client:
+    """
+    Available Clients
+    """
+    SFTP = 1
+    LOCAL = 2
+
+
 class InverterList:
     """
     List of all inverters found in the config
@@ -95,6 +103,8 @@ class Inverter:
         for datapoint_day in self._datapoints_day:
             for datapoint_min in self._datapoints_min:
                 if datapoint_min.date_time.date() == datapoint_day.date_time.date():
+                    # todo: make this faster (performance very bad)
+                    # todo: work with indexes??
                     datapoint_day.add_pdc(datapoint_min.date_time, datapoint_min.pdc)
             datapoint_day.calculate_values()
 
@@ -114,7 +124,7 @@ class MinDatapoint(Datapoint):
     """
     Minute Datapoint (min_xxxx.js)
     """
-    _influx_measurment_name = "solarlog_min"
+    influx_measurment_name = "solarlog_min"
     type = FileType.MIN
 
     def __init__(self, min_time, pac, pdc, eday, udc, temperature):
@@ -128,7 +138,7 @@ class MinDatapoint(Datapoint):
     def get_datapoint_to_influx(self, inverter):
         return (
             {
-                "measurement": self._influx_measurment_name,
+                "measurement": self.influx_measurment_name,
                 "tags": {
                     "inverter": inverter
                 },
@@ -148,20 +158,20 @@ class DayDatapoint(Datapoint):
     """
     Day Datapoint (days.js, days_hist.js)
     """
-    _influx_measurment_name = "solarlog_day"
+    influx_measurment_name = "solarlog_day"
     type = FileType.DAY
 
     def __init__(self, day_time, pac):
         self.date_time = self._timezone.localize(datetime.strptime(day_time, "%d.%m.%y"))
         self.pac = int(pac)
         self._pdc_min_data = []
-        self.efficiency = 0
-        self.pdc = 0
+        self.efficiency = float(0)
+        self.pdc = int(0)
 
     def get_datapoint_to_influx(self, inverter):
         return (
             {
-                "measurement": self._influx_measurment_name,
+                "measurement": self.influx_measurment_name,
                 "tags": {
                     "inverter": inverter
                 },
@@ -191,4 +201,3 @@ class DayDatapoint(Datapoint):
         self.pdc = int(total_ws/3600)
         if self.pdc != 0 and self.pac != 0:
             self.efficiency = round((self.pac/self.pdc), 3)
-

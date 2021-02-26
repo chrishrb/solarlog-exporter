@@ -1,26 +1,46 @@
+import logging
+import os
+
 from influxdb import InfluxDBClient
 
+from solarlog_exporter import settings, file_handler
+from solarlog_exporter.file_handler import SFTPConnection
 from solarlog_exporter.parser import ConfigParser, DataParser
 
-
 if __name__ == "__main__":
-    # Read Configs
-    config_parser = ConfigParser("testfiles/base_vars.js")
-    inverters = config_parser.parse_inverter()
+    influx_client = InfluxDBClient(settings.INFLUX_HOST, settings.INFLUX_PORT, settings.INFLUX_USERNAME,
+                                   settings.SFTP_PASSWORD, settings.INFLUX_DB)
 
-    # Parse Data of Solar Log
-    min_parser = DataParser(inverters)
-    min_parser.parse_file("testfiles/min_day.js")
+    inverters = None
+    logging.debug("Starting..")
 
-    day_parser = DataParser(inverters)
-    day_parser.parse_file("testfiles/days.js")
+    if settings.CLIENT == "SFTP":
+        sftp_client = SFTPConnection(settings.SFTP_HOST, settings.SFTP_USERNAME, settings.SFTP_PASSWORD)
+        sftp_client.get_solarlog_files(influx_client)
+        logging.info("Getting data from SFTP Server")
+        del sftp_client
 
+    # Read Configs at start
+    if os.path.exists(settings.CLIENT_DIR + "/base_vars.js"):
+        config_parser = ConfigParser(settings.CLIENT_DIR + "/base_vars.js")
+        inverters = config_parser.get_inverters()
+        logging.debug("Inverters read from config..")
+    else:
+        logging.error("No inverters in config found!")
+        exit(1)
+
+    # Read Daily and Monthly Data
+    data_parser = DataParser(inverters)
+    for file in os.listdir(settings.CLIENT_DIR):
+        # todo: first read days.js and days_hist.js and then min files
+        # todo: change concept here
+        if file.startswith("min") or file.startswith("days"):
+            logging.debug("Read file %s", file)
+            data_parser.parse_file(settings.CLIENT_DIR + "/" + file)
+
+    logging.debug("Daily Data read..")
     # Store it in Influx DB
-    client = InfluxDBClient('localhost', 8086, 'root', 'root', 'example')
-
-    client.drop_database('example')
-    client.create_database('example')
-
-    print(inverters.get_inverter_datapoints_to_influx())
-
-    # print(influx_data)
+    datapoints = file_handler.chunks(inverters.get_inverter_datapoints_to_influx(), 8000)
+    for chunk in datapoints:
+        influx_client.write_points(chunk)
+        logging.debug("Datapoints in influxdb saved")

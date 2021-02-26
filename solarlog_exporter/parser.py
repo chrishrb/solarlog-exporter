@@ -3,11 +3,27 @@ import os
 
 import pyjsparser
 
-from solarlog_exporter.utils import MinDatapoint, DayDatapoint, InverterList
+from solarlog_exporter.utils import MinDatapoint, DayDatapoint, InverterList, Client
 from solarlog_exporter.utils import FileType
 
 
-class ConfigParser:
+class Parser:
+    """
+    Main Parser for all file types
+    """
+    def parse_file(self, file_path):
+        if not os.path.isfile(file_path):
+            logging.error("File is not under path %s", self)
+
+        file = open(file_path, "r")
+        for line in file:
+            self._parse_line(line)
+
+    def _parse_line(self, line):
+        pass
+
+
+class ConfigParser(Parser):
     """
     Parser for config file (base_vars.js)
     """
@@ -15,11 +31,10 @@ class ConfigParser:
 
     def __init__(self, config_path):
         self._config_path = config_path
-        self._parse_config()
+        self.parse_file(config_path)
 
-    def _parse_config(self):
-        f = open(self._config_path, "r")
-        _parsed_config = pyjsparser.parse(f.read())
+    def _parse_line(self, line):
+        _parsed_config = pyjsparser.parse(line)
 
         for i in _parsed_config["body"]:
             if i["type"] == "VariableDeclaration":
@@ -58,29 +73,25 @@ class ConfigParser:
     def get_title(self):
         return self._config["HPTitel"]
 
-    def parse_inverter(self):
+    def get_inverters(self):
         return InverterList(self._config["WRInfo"])
 
 
-class DataParser:
+class DataParser(Parser):
     """
     Simple parser for minute and day-data
     """
+
     def __init__(self, inverters):
         self._inverters = inverters
 
-    def parse_file(self, file_path):
-        if not os.path.isfile(file_path):
-            logging.error("File is not under path %s", self)
-
-        file = open(file_path, "r")
-        for line in file:
-            self._parse_line(line)
-
     def _parse_line(self, line):
+        file_type = FileType.get_filetype(line)
+        if file_type is None:
+            return
+
         record = line.split("=")[1].strip("\n").strip('\"')
         parts = record.split("|")
-        file_type = FileType.get_filetype(line)
         date_time = parts[0]
 
         for i in range(1, len(parts)):
@@ -89,10 +100,10 @@ class DataParser:
             if file_type == FileType.MIN:
                 datapoint = MinDatapoint(date_time, values[0], values[1], values[2], values[3],
                                          values[4] if (len(values) > 4) else 0)
-                self._inverters.get_inverter(i-1).add_datapoint(datapoint)
+                self._inverters.get_inverter(i - 1).add_datapoint(datapoint)
             elif file_type == FileType.DAY:
                 datapoint = DayDatapoint(date_time, values[0])
-                self._inverters.get_inverter(i-1).add_datapoint(datapoint)
+                self._inverters.get_inverter(i - 1).add_datapoint(datapoint)
             elif file_type == FileType.MONTH:
                 pass
             elif file_type == FileType.YEAR:
