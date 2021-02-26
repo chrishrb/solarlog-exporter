@@ -43,12 +43,12 @@ class InverterList:
     """
     _inverters = []
 
-    def __init__(self, inverter_config):
+    def __init__(self, inverter_config, name_of_system):
         if len(inverter_config) == 0:
             raise Exception("No inverter in config found")
 
         for inverter in inverter_config:
-            self._inverters.append(Inverter(inverter))
+            self._inverters.append(Inverter(inverter, name_of_system))
 
     def get_inverter(self, key):
         if key < 0 or key >= self.get_number_of_inverters():
@@ -71,11 +71,12 @@ class Inverter:
     """
     Inverter Object
     """
-    def __init__(self, inverter_config):
+    def __init__(self, inverter_config, name_of_system):
         self._datapoints_min = {}
         self._datapoints_day = {}
 
         self.name = inverter_config[4]
+        self.name_of_system = name_of_system
         if re.match(r"WR \d*", self.name):
             self.name = self.name[:3] + self.name[3:].zfill(2)
         self.type = inverter_config[0]
@@ -97,10 +98,10 @@ class Inverter:
         influx_datapoints = []
 
         for key, value in self._datapoints_min.items():
-            influx_datapoints.append(value.get_datapoint_to_influx(self.name))
+            influx_datapoints.append(value.get_datapoint_to_influx(self.name, self.name_of_system))
 
         for key, value in self._datapoints_day.items():
-            influx_datapoints.append(value.get_datapoint_to_influx(self.name))
+            influx_datapoints.append(value.get_datapoint_to_influx(self.name, self.name_of_system))
 
         return influx_datapoints
 
@@ -139,12 +140,13 @@ class MinDatapoint(Datapoint):
         self.udc = int(udc)
         self.temperature = int(temperature)
 
-    def get_datapoint_to_influx(self, inverter):
+    def get_datapoint_to_influx(self, inverter, name_of_system):
         return (
             {
                 "measurement": self.influx_measurment_name,
                 "tags": {
-                    "inverter": inverter
+                    "inverter": inverter,
+                    "system": name_of_system
                 },
                 "time": self.date_time.astimezone(pytz.utc).isoformat().replace('+00:00', 'Z'),
                 "fields": {
@@ -172,12 +174,13 @@ class DayDatapoint(Datapoint):
         self.efficiency = float(0)
         self.pdc = int(0)
 
-    def get_datapoint_to_influx(self, inverter):
+    def get_datapoint_to_influx(self, inverter, name_of_system):
         return (
             {
                 "measurement": self.influx_measurment_name,
                 "tags": {
-                    "inverter": inverter
+                    "inverter": inverter,
+                    "system": name_of_system
                 },
                 "time": self.date_time.astimezone(pytz.utc).isoformat().replace('+00:00', 'Z'),
                 "fields": {

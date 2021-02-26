@@ -74,7 +74,7 @@ class ConfigParser(Parser):
         return self._config["HPTitel"]
 
     def get_inverters(self):
-        return InverterList(self._config["WRInfo"])
+        return InverterList(self._config["WRInfo"], self.get_title())
 
 
 class DataParser(Parser):

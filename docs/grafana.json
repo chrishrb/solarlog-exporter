@@ -17,7 +17,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 3,
-  "iteration": 1614374710610,
+  "iteration": 1614375555182,
   "links": [],
   "panels": [
     {
@@ -129,7 +129,13 @@
               }
             ]
           ],
-          "tags": []
+          "tags": [
+            {
+              "key": "system",
+              "operator": "=~",
+              "value": "/^$system$/"
+            }
+          ]
         },
         {
           "alias": "Ertrag",
@@ -173,7 +179,13 @@
               }
             ]
           ],
-          "tags": []
+          "tags": [
+            {
+              "key": "system",
+              "operator": "=~",
+              "value": "/^$system$/"
+            }
+          ]
         }
       ],
       "thresholds": [],
@@ -306,7 +318,13 @@
               }
             ]
           ],
-          "tags": []
+          "tags": [
+            {
+              "key": "system",
+              "operator": "=~",
+              "value": "/^$system$/"
+            }
+          ]
         }
       ],
       "timeFrom": "now/d",
@@ -400,7 +418,13 @@
               }
             ]
           ],
-          "tags": []
+          "tags": [
+            {
+              "key": "system",
+              "operator": "=~",
+              "value": "/^$system$/"
+            }
+          ]
         }
       ],
       "timeFrom": "now/M",
@@ -504,7 +528,13 @@
               }
             ]
           ],
-          "tags": []
+          "tags": [
+            {
+              "key": "system",
+              "operator": "=~",
+              "value": "/^$system$/"
+            }
+          ]
         }
       ],
       "timeFrom": "now/y",
@@ -710,7 +740,13 @@
               }
             ]
           ],
-          "tags": []
+          "tags": [
+            {
+              "key": "system",
+              "operator": "=~",
+              "value": "/^$system$/"
+            }
+          ]
         }
       ],
       "timeFrom": "now/d",
@@ -1066,6 +1102,40 @@
         "tagsQuery": "",
         "type": "query",
         "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": "\"PV-Anlage Trentiner Ring\"",
+          "value": "\"PV-Anlage Trentiner Ring\""
+        },
+        "datasource": null,
+        "definition": "SHOW TAG VALUES  WITH KEY = \"system\" ",
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "Anlage",
+        "multi": false,
+        "name": "system",
+        "options": [
+          {
+            "selected": true,
+            "text": "\"PV-Anlage Trentiner Ring\"",
+            "value": "\"PV-Anlage Trentiner Ring\""
+          }
+        ],
+        "query": "SHOW TAG VALUES  WITH KEY = \"system\" ",
+        "refresh": 0,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
       }
     ]
   },
@@ -1077,5 +1147,5 @@
   "timezone": "",
   "title": "SolarLog",
   "uid": "6vwSvnyGkd",
-  "version": 6
+  "version": 7
 }
