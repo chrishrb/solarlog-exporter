@@ -22,7 +22,7 @@ class SFTPConnection:
         today_filename = datetime.now().strftime("min%y%m%d.js")
         prog = re.compile(r'^min\d{6}\.js$')
 
-        for filename in self._sftp.listdir(settings.SFTP_DIR):
+        for filename in self._sftp.listdir(settings.SOLAR_LOG_DIR):
             if prog.match(filename) and filename >= since_filename \
                     and filename != today_filename:
                 self._files.append(filename)
@@ -34,21 +34,22 @@ class SFTPConnection:
         clear_tmp_dir()
 
         for file in self._files:
-            self._sftp.get(settings.SFTP_DIR + "/" + file, settings.CLIENT_DIR + "/" + file)
+            self._sftp.get(settings.SOLAR_LOG_DIR + "/" + file, settings.TMP_DIR + "/" + file)
 
     def __del__(self):
         self._sftp.close()
 
 
 def clear_tmp_dir():
-    for file in os.listdir(path=settings.CLIENT_DIR):
+    for file in os.listdir(path=settings.TMP_DIR):
         if not file.endswith(".js"):
             continue
-        os.remove(os.path.join(settings.CLIENT_DIR, file))
+        os.remove(os.path.join(settings.TMP_DIR, file))
 
 
 def get_last_record_time_influxdb(influx_client):
-    query = "SELECT * FROM {} ORDER BY time DESC LIMIT 1;".format(MinDatapoint.influx_measurment_name)
+    query = "SELECT * FROM {} WHERE SYSTEM = '{}' ORDER BY time DESC LIMIT 1;" \
+        .format(MinDatapoint.influx_measurment_name, settings.SOLAR_LOG_SYSTEM)
 
     result_last_point_query = list(influx_client.query(query))
 

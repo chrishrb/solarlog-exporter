@@ -23,10 +23,16 @@ if __name__ == "__main__":
         sftp_client.get_solarlog_files(influx_client, last_record_time)
         logging.info("Getting data from SFTP Server")
         del sftp_client
+    elif settings.CLIENT == "LOCAL":
+        # TODO: add handling for local dirs (copy all files to tmp-dir)
+        pass
+    else:
+        logging.error("Client %s not found", settings.CLIENT)
+        exit(1)
 
     # Read Configs at start
-    if os.path.exists(settings.CLIENT_DIR + "/base_vars.js"):
-        config_parser = ConfigParser(settings.CLIENT_DIR + "/base_vars.js")
+    if os.path.exists(settings.TMP_DIR + "/base_vars.js"):
+        config_parser = ConfigParser(settings.TMP_DIR + "/base_vars.js")
         inverters = config_parser.get_inverters()
         logging.debug("Inverters read from config..")
     else:
@@ -35,10 +41,10 @@ if __name__ == "__main__":
 
     # Read Daily and Monthly Data
     data_parser = DataParser(inverters, last_record_time)
-    for file in os.listdir(settings.CLIENT_DIR):
+    for file in os.listdir(settings.TMP_DIR):
         if file.startswith("min") or file.startswith("days"):
             logging.debug("Read file %s", file)
-            data_parser.parse_file(settings.CLIENT_DIR + "/" + file)
+            data_parser.parse_file(settings.TMP_DIR + "/" + file)
 
     logging.debug("Daily Data read..")
     # Store it in Influx DB

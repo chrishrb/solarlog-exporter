@@ -11,7 +11,9 @@ PROJECT_DIR = Path(__file__).parent.parent
 
 # Local/SFTP
 CLIENT = os.getenv("CLIENT", "LOCAL")
-CLIENT_DIR = str(PROJECT_DIR) + "/tmp"
+TMP_DIR = str(PROJECT_DIR) + "/tmp"
+SOLAR_LOG_DIR = os.getenv("SOLAR_LOG_DIR", "")
+SOLAR_LOG_SYSTEM = os.getenv("SOLAR_LOG_SYSTEM", "PV-Anlage")
 
 # INFLUX
 INFLUX_HOST = os.getenv("INFLUX_HOST", "localhost")
@@ -25,4 +27,3 @@ SFTP_HOST = os.getenv("SFTP_HOST")
 SFTP_PORT = os.getenv("SFTP_PORT", 22)
 SFTP_USERNAME = os.getenv("SFTP_USERNAME")
 SFTP_PASSWORD = os.getenv("SFTP_PASSWORD")
-SFTP_DIR = os.getenv("SFTP_DIR", "")

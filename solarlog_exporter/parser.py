@@ -3,6 +3,7 @@ import os
 
 import pyjsparser
 
+from solarlog_exporter import settings
 from solarlog_exporter.utils import MinDatapoint, DayDatapoint, InverterList, Client
 from solarlog_exporter.utils import FileType
 
@@ -11,6 +12,7 @@ class Parser:
     """
     Main Parser for all file types
     """
+
     def parse_file(self, file_path):
         if not os.path.isfile(file_path):
             logging.error("File is not under path %s", self)
@@ -53,6 +55,7 @@ class ConfigParser(Parser):
                         if not self._config.get(i["expression"]["left"]["object"]["name"]):
                             self._config[i["expression"]["left"]["object"]["name"]] = []
 
+                        values_1 = []
                         if i["expression"]["right"]["type"] == "Literal":
                             values = i["expression"]["right"]["value"]
                         elif i["expression"]["right"]["type"] == "NewExpression":
@@ -62,19 +65,54 @@ class ConfigParser(Parser):
                                     values.append(k["value"])
                         else:
                             values = 0
+                        values_1.append(values)
 
-                        self._config[i["expression"]["left"]["object"]["name"]].append(values)
-                    if i["expression"]["left"]["object"]["type"] == "MemberExpression":
-                        pass
+                        self._config[i["expression"]["left"]["object"]["name"]].append(values_1)
+                    elif i["expression"]["left"]["object"]["type"] == "MemberExpression":
+                        if i["expression"]["left"]["object"]["object"]["type"] == "MemberExpression":
+                            if i["expression"]["left"]["object"]["object"]["object"]["type"] == "Identifier":
+                                index_1 = i["expression"]["left"]["object"]["object"]["object"]["name"]
+                                index_2 = int(i["expression"]["left"]["object"]["object"]["property"]["raw"])
+                                if not self._config.get(index_1):
+                                    self._config[index_1] = []
+
+                                if i["expression"]["right"]["type"] == "Literal":
+                                    values = i["expression"]["right"]["value"]
+                                elif i["expression"]["right"]["type"] == "NewExpression":
+                                    values = []
+                                    for k in i["expression"]["right"]["arguments"]:
+                                        if k["type"] == "Literal":
+                                            values.append(k["value"])
+                                else:
+                                    values = 0
+
+                                if len(self._config[index_1][index_2]) < 2:
+                                    self._config[index_1][index_2].append([])
+
+                                self._config[index_1][index_2][1].append(values)
 
     def get_power(self):
         return self._config["HPLeistung"]
 
     def get_title(self):
-        return self._config["HPTitel"]
+        return settings.SOLAR_LOG_SYSTEM
+
+    def get_group(self, inverter_index):
+        if "AnlagenGrp" not in self._config:
+            return None
+
+        for group in self._config["AnlagenGrp"]:
+            if (inverter_index+1) in group[1]:
+                return group[0][0]
+
+    def get_inverter_config(self):
+        default_config = self._config["WRInfo"]
+        for index, item in enumerate(default_config):
+            item.append(self.get_group(index))
+        return default_config
 
     def get_inverters(self):
-        return InverterList(self._config["WRInfo"], self.get_title())
+        return InverterList(self.get_inverter_config(), self.get_title())
 
 
 class DataParser(Parser):
