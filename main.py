@@ -11,9 +11,6 @@ if __name__ == "__main__":
     influx_client = InfluxDBClient(settings.INFLUX_HOST, settings.INFLUX_PORT, settings.INFLUX_USERNAME,
                                    settings.SFTP_PASSWORD, settings.INFLUX_DB)
 
-    influx_client.drop_database("example")
-    influx_client.create_database("example")
-
     inverters = None
     last_record_time = get_last_record_time_influxdb(influx_client)
     logging.debug("Starting..")

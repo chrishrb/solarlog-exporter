@@ -3,6 +3,9 @@
 # no testfiles
 tmp/*
 
+# SSH-Files
+known_hosts
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

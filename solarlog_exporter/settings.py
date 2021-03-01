@@ -16,11 +16,11 @@ SOLAR_LOG_DIR = os.getenv("SOLAR_LOG_DIR", "")
 SOLAR_LOG_SYSTEM = os.getenv("SOLAR_LOG_SYSTEM", "PV-Anlage")
 
 # INFLUX
-INFLUX_HOST = os.getenv("INFLUX_HOST", "localhost")
-INFLUX_PORT = os.getenv("INFLUX_PORT", 8086)
-INFLUX_USERNAME = os.getenv("INFLUX_USERNAME", "root")
-INFLUX_PASSWORD = os.getenv("INFLUX_PASSWORD", "root")
-INFLUX_DB = os.getenv("INFLUX_DB")
+INFLUX_HOST = os.getenv("INFLUXDB_HOST", "localhost")
+INFLUX_PORT = os.getenv("INFLUXDB_PORT", 8086)
+INFLUX_USERNAME = os.getenv("INFLUXDB_ADMIN_USER", "root")
+INFLUX_PASSWORD = os.getenv("INFLUXDB_ADMIN_PASSWORD", "root")
+INFLUX_DB = os.getenv("INFLUXDB_DB")
 
 # SFTP
 SFTP_HOST = os.getenv("SFTP_HOST")

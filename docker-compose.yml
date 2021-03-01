@@ -1,0 +1,32 @@
+version: '2'
+services:
+  solarlog-export:
+    build: .
+    container_name: solarlog-export
+    volumes:
+      - ./known_hosts:/root/.ssh/known_hosts:ro
+    depends_on:
+      - influxdb
+    env_file:
+      - .env
+    networks:
+      - default
+
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    ports:
+      - '8086:8086'
+    volumes:
+      - influxdb-storage:/var/lib/influxdb
+    env_file:
+      - .env
+    networks:
+      - default
+
+volumes:
+  influxdb-storage:
+
+networks:
+  default:
+    driver: bridge
