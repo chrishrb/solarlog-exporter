@@ -13,7 +13,7 @@ services:
       - default
 
   influxdb:
-    image: influxdb:latest
+    image: influxdb:1.8.4
     container_name: influxdb
     ports:
       - '8086:8086'
