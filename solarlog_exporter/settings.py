@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.DEBUG)
 TIMEZONE = os.getenv("TIMEZONE", "Europe/Berlin")
 PROJECT_DIR = Path(__file__).parent.parent
 
-DIR = str(PROJECT_DIR) + "/tmp"
+DIR = os.getenv("DIR", "/files")
 SOLAR_LOG_DIR = os.getenv("SOLAR_LOG_DIR", "")
 SOLAR_LOG_SYSTEM = os.getenv("SOLAR_LOG_SYSTEM", "PV-Anlage")
 

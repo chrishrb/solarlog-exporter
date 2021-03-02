@@ -19,7 +19,6 @@ RUN set -ex \
 
 ADD solarlog_exporter /app/solarlog_exporter
 ADD main.py /app/main.py
-RUN mkdir /app/tmp
 
 WORKDIR /app
 

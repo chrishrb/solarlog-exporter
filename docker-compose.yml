@@ -4,7 +4,7 @@ services:
     build: .
     container_name: solarlog-exporter
     volumes:
-      - ./known_hosts:/root/.ssh/known_hosts:ro
+      - ./tmp:/files
     depends_on:
       - influxdb
     env_file:

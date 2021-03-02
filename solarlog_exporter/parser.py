@@ -4,7 +4,7 @@ import os
 import pyjsparser
 
 from solarlog_exporter import settings
-from solarlog_exporter.utils import MinDatapoint, DayDatapoint, InverterList, Client
+from solarlog_exporter.utils import MinDatapoint, DayDatapoint, InverterList
 from solarlog_exporter.utils import FileType
 
 
