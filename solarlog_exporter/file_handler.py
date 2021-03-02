@@ -2,49 +2,22 @@ import os
 import re
 from datetime import datetime, timedelta
 
-import pysftp
 import pytz
 
 from solarlog_exporter import settings
 from solarlog_exporter.utils import MinDatapoint
 
 
-class SFTPConnection:
-    _files = ["days.js", "base_vars.js", "min_day.js"]
+def is_import_file(filename, last_record_time):
+    since_filename = last_record_time.strftime("min%y%m%d.js")
+    today_filename = datetime.now().strftime("min%y%m%d.js")
+    prog = re.compile(r'^(min|days)\d{6}\.js$')
 
-    def __init__(self, host, username, password):
-        self._sftp = pysftp.Connection(host=host, username=username, password=password)
+    if prog.match(filename) and filename >= since_filename \
+            and filename != today_filename:
+        return True
 
-    def _list_solarlog_files_since(self, influx_client, last_record_time):
-        last_record_time = get_last_record_time_influxdb(influx_client)
-
-        since_filename = last_record_time.strftime("min%y%m%d.js")
-        today_filename = datetime.now().strftime("min%y%m%d.js")
-        prog = re.compile(r'^min\d{6}\.js$')
-
-        for filename in self._sftp.listdir(settings.SOLAR_LOG_DIR):
-            if prog.match(filename) and filename >= since_filename \
-                    and filename != today_filename:
-                self._files.append(filename)
-            elif filename == "days_hist.js" and datetime.now().date() != last_record_time.date():
-                self._files.append("days_hist.js")
-
-    def get_solarlog_files(self, influx_client, last_record_time):
-        self._list_solarlog_files_since(influx_client, last_record_time)
-        clear_tmp_dir()
-
-        for file in self._files:
-            self._sftp.get(settings.SOLAR_LOG_DIR + "/" + file, settings.TMP_DIR + "/" + file)
-
-    def __del__(self):
-        self._sftp.close()
-
-
-def clear_tmp_dir():
-    for file in os.listdir(path=settings.TMP_DIR):
-        if not file.endswith(".js"):
-            continue
-        os.remove(os.path.join(settings.TMP_DIR, file))
+    return False
 
 
 def get_last_record_time_influxdb(influx_client):

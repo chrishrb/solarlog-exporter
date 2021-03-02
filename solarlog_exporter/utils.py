@@ -29,14 +29,6 @@ class FileType:
             return None
 
 
-class Client:
-    """
-    Available Clients
-    """
-    SFTP = 1
-    LOCAL = 2
-
-
 class InverterList:
     """
     List of all inverters found in the config

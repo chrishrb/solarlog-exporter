@@ -26,4 +26,4 @@ WORKDIR /app
 ENV VIRTUAL_ENV /env
 ENV PATH /env/bin:$PATH
 
-ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3"]
