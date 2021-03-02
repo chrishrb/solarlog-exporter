@@ -14,6 +14,7 @@ if __name__ == "__main__":
     inverters = None
     last_record_time = get_last_record_time_influxdb(influx_client)
     logging.debug("Starting..")
+    logging.debug("Last Record %s", last_record_time)
 
     # Read Configs at start
     if os.path.exists(settings.DIR + "/base_vars.js"):

@@ -1,6 +1,6 @@
 version: '2'
 services:
-  solarlog-export:
+  solarlog-exporter:
     build: .
     container_name: solarlog-exporter
     volumes:
@@ -15,8 +15,6 @@ services:
   influxdb:
     image: influxdb:1.8.4
     container_name: influxdb
-    ports:
-      - '8086:8086'
     volumes:
       - influxdb-storage:/var/lib/influxdb
     env_file:
