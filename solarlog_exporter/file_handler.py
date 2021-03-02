@@ -11,10 +11,11 @@ from solarlog_exporter.utils import MinDatapoint
 def is_import_file(filename, last_record_time):
     since_filename = last_record_time.strftime("min%y%m%d.js")
     today_filename = datetime.now().strftime("min%y%m%d.js")
-    prog = re.compile(r'(^min\d{6}\.js$)|(days.*\.js$)')
 
-    if prog.match(filename) and filename >= since_filename \
+    if re.compile(r'^min\d{6}\.js$').match(filename) and filename >= since_filename \
             and filename != today_filename:
+        return True
+    elif re.compile(r'days.*\.js$').match(filename):
         return True
 
     return False
