@@ -1,0 +1,35 @@
+version: '2'
+services:
+  influxdb:
+    image: influxdb:1.8.4
+    container_name: influxdb
+    volumes:
+      - influxdb-storage:/var/lib/influxdb
+    networks:
+      - monitoring
+
+  tasker:
+    image: strm/tasker
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+        configuration: |
+            schedule:
+                - every: 10 minutes
+                  task: system1
+            tasks:
+                docker:
+                    - name: system1
+                      image: chrishrb/solarlog-exporter:v1.0
+                      network: monitoring
+                      environment:
+                        - DIR='/data'
+                      volumes:
+                        - /mnt/volume:/data:ro
+volumes:
+  influxdb-storage:
+
+networks:
+  monitoring:
+    external:
+      name: monitoring

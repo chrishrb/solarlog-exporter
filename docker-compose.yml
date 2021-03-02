@@ -7,10 +7,8 @@ services:
       - ./tmp:/files
     depends_on:
       - influxdb
-    env_file:
-      - .env
     networks:
-      - default
+      - monitoring
 
   influxdb:
     image: influxdb:1.8.4
@@ -20,11 +18,12 @@ services:
     env_file:
       - .env
     networks:
-      - default
+      - monitoring
 
 volumes:
   influxdb-storage:
 
 networks:
-  default:
-    driver: bridge
+  monitoring:
+    external:
+      name: monitoring
