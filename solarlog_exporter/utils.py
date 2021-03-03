@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytz as pytz
 
@@ -81,7 +81,7 @@ class Inverter:
         self.efficiency = 0
 
     def add_datapoint(self, datapoint, last_record_time):
-        if datapoint.date_time < last_record_time:
+        if datapoint.date_time.date() < last_record_time.date():
             return
 
         if datapoint.type == FileType.MIN:
