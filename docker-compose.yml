@@ -1,7 +1,7 @@
 version: '2'
 services:
   solarlog-exporter:
-    build: .
+    image: chrishrb/solarlog-exporter:v1.0
     container_name: solarlog-exporter
     volumes:
       - ./tmp:/files
@@ -11,6 +11,7 @@ services:
       - monitoring
 
   influxdb:
+    # todo: latest is not supported yet
     image: influxdb:1.8.4
     container_name: influxdb
     volumes:

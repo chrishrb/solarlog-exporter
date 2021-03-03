@@ -23,9 +23,10 @@ services:
                       image: chrishrb/solarlog-exporter:v1.0
                       network: monitoring
                       environment:
-                        - DIR='/data'
+                        - INFLUXDB_HOST=influxdb
+                        - INFLUXDB_DB=solarlog
                       volumes:
-                        - /mnt/volume:/data:ro
+                        - /mnt/volume:/files:ro
 volumes:
   influxdb-storage:
 
