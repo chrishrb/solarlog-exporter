@@ -1,5 +1,6 @@
 import re
-from datetime import datetime, timedelta
+from abc import abstractmethod
+from datetime import datetime
 
 import pytz as pytz
 
@@ -21,10 +22,6 @@ class FileType:
             return FileType.MIN
         elif line.startswith("da[dx++]="):
             return FileType.DAY
-        elif line.startswith("mo[mx++]="):
-            return FileType.MONTH
-        elif line.startswith("ye[yx++]="):
-            return FileType.YEAR
         else:
             return None
 
@@ -33,27 +30,30 @@ class InverterList:
     """
     List of all inverters found in the config
     """
-    _inverters = []
+    def __init__(self, inverter_config, system):
+        self.inverters = []
 
-    def __init__(self, inverter_config, name_of_system):
         if len(inverter_config) == 0:
-            raise Exception("No inverter in config found")
+            raise ValueError("No inverter in config found")
+
+        if not system:
+            raise ValueError("No name of system provided")
 
         for inverter in inverter_config:
-            self._inverters.append(Inverter(inverter, name_of_system))
+            self.inverters.append(Inverter(inverter, system))
 
     def get_inverter(self, key):
         if key < 0 or key >= self.get_number_of_inverters():
             return None
-        return self._inverters[key]
+        return self.inverters[key]
 
     def get_number_of_inverters(self):
-        return len(self._inverters)
+        return len(self.inverters)
 
     def get_inverter_datapoints_to_influx(self):
         datapoints = []
 
-        for inverter in self._inverters:
+        for inverter in self.inverters:
             datapoints += inverter.get_datapoints_to_influx()
 
         return datapoints
@@ -63,12 +63,13 @@ class Inverter:
     """
     Inverter Object
     """
-    def __init__(self, inverter_config, name_of_system):
-        self._datapoints_min = {}
-        self._datapoints_day = {}
+
+    def __init__(self, inverter_config, system):
+        self.datapoints_min = {}
+        self.datapoints_day = {}
 
         self.name = inverter_config[0][4]
-        self.name_of_system = name_of_system
+        self.system = system
         if re.match(r"WR \d*", self.name):
             self.name = self.name[:3] + self.name[3:].zfill(2)
         self.type = inverter_config[0][0]
@@ -85,28 +86,30 @@ class Inverter:
             return
 
         if datapoint.type == FileType.MIN:
-            self._datapoints_min[datapoint.date_time] = datapoint
+            self.datapoints_min[datapoint.get_date_time_as_timestring()] = datapoint
         elif datapoint.type == FileType.DAY:
-            self._datapoints_day[datapoint.date_time.date()] = datapoint
+            self.datapoints_day[datapoint.get_date_time_as_datestring()] = datapoint
 
     def get_datapoints_to_influx(self):
+        # todo: overthink this
         self._add_values_to_datapoint()
         influx_datapoints = []
 
-        for key, value in self._datapoints_min.items():
+        for key, value in self.datapoints_min.items():
             influx_datapoints.append(value.get_datapoint_to_influx(self))
 
-        for key, value in self._datapoints_day.items():
+        for key, value in self.datapoints_day.items():
             influx_datapoints.append(value.get_datapoint_to_influx(self))
 
         return influx_datapoints
 
     def _add_values_to_datapoint(self):
-        for datapoint_min in self._datapoints_min.values():
-            if datapoint_min.date_time.date() in self._datapoints_day:
-                self._datapoints_day[datapoint_min.date_time.date()].add_pdc(datapoint_min.date_time, datapoint_min.pdc)
+        for datapoint_min in self.datapoints_min.values():
+            if datapoint_min.get_date_time_as_datestring() in self.datapoints_day:
+                self.datapoints_day[datapoint_min.get_date_time_as_datestring()].add_pdc(datapoint_min.date_time,
+                                                                                         datapoint_min.pdc)
 
-        for key, value in self._datapoints_day.items():
+        for key, value in self.datapoints_day.items():
             value.calculate_values()
 
 
@@ -119,6 +122,19 @@ class Datapoint:
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.date_time == other.date_time
+
+    @abstractmethod
+    def get_datapoint_to_influx(self, inverter):
+        pass
+
+    def get_date_time_as_timestring(self):
+        return self.date_time.strftime("%d.%m.%y %H:%M:%S")
+
+    def get_date_time_as_datestring(self):
+        return self.date_time.date().strftime("%d.%m.%y")
+
+    def get_date_time_for_influxdb(self):
+        return self.date_time.astimezone(pytz.utc).isoformat().replace('+00:00', 'Z')
 
 
 class MinDatapoint(Datapoint):
@@ -142,10 +158,10 @@ class MinDatapoint(Datapoint):
                 "measurement": self.influx_measurment_name,
                 "tags": {
                     "inverter": inverter.name,
-                    "system": inverter.name_of_system,
+                    "system": inverter.system,
                     "group": inverter.group
                 },
-                "time": self.date_time.astimezone(pytz.utc).isoformat().replace('+00:00', 'Z'),
+                "time": self.get_date_time_for_influxdb(),
                 "fields": {
                     "Pac": self.pac,
                     "Pdc": self.pdc,
@@ -177,10 +193,10 @@ class DayDatapoint(Datapoint):
                 "measurement": self.influx_measurment_name,
                 "tags": {
                     "inverter": inverter.name,
-                    "system": inverter.name_of_system,
+                    "system": inverter.system,
                     "group": inverter.group
                 },
-                "time": self.date_time.astimezone(pytz.utc).isoformat().replace('+00:00', 'Z'),
+                "time": self.get_date_time_for_influxdb(),
                 "fields": {
                     "Pac": self.pac,
                     "Pdc": self.pdc,
@@ -192,17 +208,19 @@ class DayDatapoint(Datapoint):
     def add_pdc(self, time, pdc):
         self._pdc_min_data.append([time, pdc])
 
+    # todo: does not work as expected
     def calculate_values(self):
         total_ws = 0.0
         total_t = 0
 
         for i in range(1, len(self._pdc_min_data)):
-            dt = self._pdc_min_data[i][0] - self._pdc_min_data[i-1][0]
+            dt = self._pdc_min_data[i][0] - self._pdc_min_data[i - 1][0]
             dt = abs(dt.total_seconds())
             average = (self._pdc_min_data[i][1] + self._pdc_min_data[i - 1][1]) / 2
             total_ws += average * dt
             total_t += dt
 
-        self.pdc = int(total_ws/3600)
+        # todo: if pdc greater than pac -> adjust pdc and efficiency
+        self.pdc = int(total_ws / 3600)
         if self.pdc != 0 and self.pac != 0:
-            self.efficiency = round((self.pac/self.pdc), 3)
+            self.efficiency = round((self.pac / self.pdc), 3)

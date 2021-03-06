@@ -8,11 +8,12 @@ from solarlog_exporter.file_handler import get_last_record_time_influxdb, is_imp
 from solarlog_exporter.parser import ConfigParser, DataParser
 
 if __name__ == "__main__":
-    influx_client = InfluxDBClient(settings.INFLUX_HOST, settings.INFLUX_PORT, settings.INFLUX_USERNAME,
-                                   settings.INFLUX_PASSWORD, settings.INFLUX_DB)
+    #influx_client = InfluxDBClient(settings.INFLUX_HOST, settings.INFLUX_PORT, settings.INFLUX_USERNAME,
+    #                               settings.INFLUX_PASSWORD, settings.INFLUX_DB)
 
-    inverters = None
-    last_record_time = get_last_record_time_influxdb(influx_client)
+    #inverters = None
+    #last_record_time = get_last_record_time_influxdb(influx_client)
+    last_record_time = None
     logging.debug("Starting..")
     logging.debug("Last Record %s", last_record_time)
 

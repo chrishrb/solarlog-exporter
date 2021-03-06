@@ -18,11 +18,10 @@ RUN set -ex \
     && apk del .build-deps
 
 ADD solarlog_exporter /app/solarlog_exporter
-ADD main.py /app/main.py
 
 WORKDIR /app
 
 ENV VIRTUAL_ENV /env
 ENV PATH /env/bin:$PATH
 
-ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3", "/app/main.py"]

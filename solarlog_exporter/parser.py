@@ -1,5 +1,6 @@
 import logging
 import os
+from abc import abstractmethod
 
 import pyjsparser
 
@@ -21,6 +22,7 @@ class Parser:
         for line in file:
             self._parse_line(line)
 
+    @abstractmethod
     def _parse_line(self, line):
         pass
 
@@ -143,9 +145,5 @@ class DataParser(Parser):
             elif file_type == FileType.DAY:
                 datapoint = DayDatapoint(date_time, values[0])
                 self._inverters.get_inverter(i - 1).add_datapoint(datapoint, self._last_record_time)
-            elif file_type == FileType.MONTH:
-                pass
-            elif file_type == FileType.YEAR:
-                pass
             else:
                 logging.error("This filetype is not supported!")
