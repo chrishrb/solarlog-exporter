@@ -17,10 +17,12 @@ class Parser:
     def parse_file(self, file_path):
         if not os.path.isfile(file_path):
             logging.error("File is not under path %s", self)
+            return
 
         file = open(file_path, "r")
         for line in file:
             self._parse_line(line)
+        file.close()
 
     @abstractmethod
     def _parse_line(self, line):
@@ -31,10 +33,9 @@ class ConfigParser(Parser):
     """
     Parser for config file (base_vars.js)
     """
-    _config = {}
 
     def __init__(self, config_path):
-        self._config_path = config_path
+        self._config = {}
         self.parse_file(config_path)
 
     def _parse_line(self, line):
@@ -43,12 +44,12 @@ class ConfigParser(Parser):
         for i in _parsed_config["body"]:
             if i["type"] == "VariableDeclaration":
                 if i["declarations"][0]["init"]["type"] == "Literal":
-                    self._config[i["declarations"][0]["id"]["name"]] = i["declarations"][0]["init"]["raw"]
+                    self._config[i["declarations"][0]["id"]["name"]] = i["declarations"][0]["init"]["value"]
                 elif i["declarations"][0]["init"]["type"] == "NewExpression":
                     temp = []
                     for j in i["declarations"][0]["init"]["arguments"]:
                         if j["type"] == "Literal":
-                            temp.append(j["raw"])
+                            temp.append(j["value"])
                     self._config[i["declarations"][0]["id"]["name"]] = temp
             elif i["type"] == "ExpressionStatement":
                 if i["expression"]["type"] == "AssignmentExpression" \
@@ -98,6 +99,27 @@ class ConfigParser(Parser):
 
     def get_title(self):
         return settings.SOLAR_LOG_SYSTEM
+
+    def get_operator(self):
+        return self._config["HPBetreiber"]
+
+    def get_place(self):
+        return self._config["HPStandort"]
+
+    def get_installation_date(self):
+        return self._config["HPInbetrieb"]
+
+    def get_orientation(self):
+        return self._config["HPAusricht"]
+
+    def get_banner_1(self):
+        return self._config["BannerZeile1"]
+
+    def get_banner_2(self):
+        return self._config["BannerZeile2"]
+
+    def get_banner_3(self):
+        return self._config["BannerZeile3"]
 
     def get_group(self, inverter_index):
         if "AnlagenGrp" not in self._config:

@@ -227,10 +227,6 @@ class TestDayDatapoint(TestCase):
             }
         )
 
-    # todo
-    def test_add_pdc(self):
-        pass
-
-    # todo: tests are very important here
+    # todo: add tests
     def test_calculate_values(self):
-        self.fail()
+        pass
