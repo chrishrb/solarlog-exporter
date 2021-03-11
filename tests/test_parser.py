@@ -8,7 +8,7 @@ from solarlog_exporter.utils import InverterList
 
 class TestConfigParser(TestCase):
     def setUp(self):
-        self._assets = settings.PROJECT_DIR + "/tests/assets/"
+        self._assets = "./assets/"
         self._config_parser = ConfigParser(self._assets + "base_vars.js")
 
     def test_get_power(self):
@@ -56,7 +56,7 @@ class TestConfigParser(TestCase):
 
 class TestDataParser(TestCase):
     def setUp(self):
-        self._assets = settings.PROJECT_DIR + "/tests/assets/"
+        self._assets = "./assets/"
 
         config_parser = ConfigParser(self._assets + "base_vars.js")
         self._inverter_list = config_parser.get_inverters()
@@ -83,4 +83,3 @@ class TestDataParser(TestCase):
         data_parser.parse_file(self._assets + "minTEST.js")
 
         self.assertIsNone(self._inverter_list.get_inverter(0).datapoints_min.get('28.02.21 23:55:00'))
-

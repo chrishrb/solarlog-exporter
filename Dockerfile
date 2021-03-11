@@ -1,27 +1,17 @@
-FROM python:3.9.1-alpine3.12
+FROM python:3.9.1-alpine3.12 as base
+WORKDIR /solarlog_exporter
+COPY requirements.txt /solarlog_exporter
+RUN pip3 install -r requirements.txt
 
-ADD requirements.txt /app/requirements.txt
+FROM base as src
+ADD solarlog_exporter /solarlog_exporter
 
-ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
-RUN set -ex \
-    && apk add --no-cache --virtual .build-deps postgresql-dev build-base \
-       libressl-dev musl-dev libffi-dev \
-    && python -m venv /env \
-    && /env/bin/pip install --upgrade pip \
-    && /env/bin/pip install --no-cache-dir -r /app/requirements.txt \
-    && runDeps="$(scanelf --needed --nobanner --recursive /env \
-        | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' \
-        | sort -u \
-        | xargs -r apk info --installed \
-        | sort -u)" \
-    && apk add --virtual rundeps $runDeps \
-    && apk del .build-deps
+FROM src as test
+COPY tests /solarlog_exporter
+COPY requirements.dev.txt /solarlog_exporter
+RUN pip3 install -r requirements.dev.txt
+RUN python3 -m pytest
 
-ADD solarlog_exporter /app/solarlog_exporter
-
-WORKDIR /app
-
-ENV VIRTUAL_ENV /env
-ENV PATH /env/bin:$PATH
-
-ENTRYPOINT ["python3", "/app/main.py"]
+FROM src as prod
+ENTRYPOINT ["python3"]
+CMD ["main.py"]
