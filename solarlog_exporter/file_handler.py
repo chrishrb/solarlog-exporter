@@ -1,3 +1,4 @@
+import logging
 import re
 from datetime import datetime, timedelta
 
@@ -26,9 +27,11 @@ def get_last_record_time_influxdb(influx_client):
 
     if result_last_point_query:
         time = result_last_point_query[0][0]['time']
+        logging.debug("Last record %s", time)
         return datetime.fromisoformat(time[:-1]).astimezone(pytz.utc)
     else:
         # no last record found
+        logging.warning("No last record found")
         return datetime.now(pytz.utc) - timedelta(days=1 * 365)
 
 

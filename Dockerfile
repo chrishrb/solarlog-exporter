@@ -1,17 +1,27 @@
-FROM python:3.9.1-alpine3.12 as base
-WORKDIR /solarlog_exporter
-COPY requirements.txt /solarlog_exporter
+FROM python:3.8-slim as base
+MAINTAINER Christoph Herb <ch.herb@gmx.de>
+
+ARG APP_NAME=solarlog_exporter
+ARG HOME="/app"
+
+ENV HOME=${HOME}
+ENV APP_NAME=${APP_NAME}
+
+WORKDIR ${HOME}
+COPY requirements.txt .
+RUN /usr/local/bin/python -m pip install --upgrade pip
 RUN pip3 install -r requirements.txt
 
 FROM base as src
-ADD solarlog_exporter /solarlog_exporter
 
-FROM src as test
-COPY tests /solarlog_exporter
-COPY requirements.dev.txt /solarlog_exporter
-RUN pip3 install -r requirements.dev.txt
-RUN python3 -m pytest
+COPY ${APP_NAME} ./${APP_NAME}
+COPY __main__.py .
+COPY bin ./bin
+COPY setup.py .
+RUN pip install -e .
+
+COPY tests ./tests
+RUN ./bin/entrypoint test
 
 FROM src as prod
-ENTRYPOINT ["python3"]
-CMD ["main.py"]
+ENTRYPOINT ["/bin/bash", "./bin/entrypoint"]

@@ -1,0 +1,30 @@
+version: '2'
+services:
+  solarlog-exporter:
+    build:
+      context: .
+    volumes:
+      - ./tmp:/data
+    command: -d /data
+    depends_on:
+      - influxdb
+    environment:
+      - INFLUXDB_HOST=influxdb
+      - INFLUXDB_DB=solarlog
+    networks:
+      - solarlog
+
+  influxdb:
+    # todo: add password auth
+    image: influxdb:1.8.4
+    #volumes:
+    #  - ./tmp/influxdb:/var/lib/influxdb
+    environment:
+      - INFLUXDB_DB=solarlog
+    networks:
+      - solarlog
+
+networks:
+  solarlog:
+    external:
+      name: solarlog

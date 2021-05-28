@@ -1,30 +1,16 @@
 version: '2'
 services:
   solarlog-exporter:
-    image: chrishrb/solarlog-exporter:v1.0
+    image: chrishrb/solarlog-exporter:latest
     container_name: solarlog-exporter
     volumes:
-      - ./tmp:/files
-    depends_on:
-      - influxdb
+      - ./tests/assets:/data
+    environment:
+      - INFLUXDB_DB=solarlog
     networks:
-      - monitoring
-
-  influxdb:
-    # todo: latest is not supported yet
-    image: influxdb:1.8.4
-    container_name: influxdb
-    volumes:
-      - influxdb-storage:/var/lib/influxdb
-    env_file:
-      - .env
-    networks:
-      - monitoring
-
-volumes:
-  influxdb-storage:
+      - solarlog_monitoring
 
 networks:
   monitoring:
     external:
-      name: monitoring
+      name: solarlog_monitoring

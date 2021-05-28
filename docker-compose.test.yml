@@ -1,0 +1,33 @@
+version: '2'
+services:
+  solarlog-exporter:
+    build:
+      context: .
+    volumes:
+      - ./tests/assets:/data
+    command: -d /data
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    environment:
+      - INFLUXDB_HOST=influxdb
+      - INFLUXDB_DB=solarlog
+    networks:
+      - solarlog
+
+  influxdb:
+    image: influxdb:1.8.4
+    environment:
+      - INFLUXDB_DB=solarlog
+    networks:
+      - solarlog
+    healthcheck:
+      test: [ "CMD", "curl", "-sI", "http://127.0.0.1:8086/health" ]
+      interval: 30s
+      timeout: 1s
+      retries: 24
+
+networks:
+  solarlog:
+    external:
+      name: solarlog

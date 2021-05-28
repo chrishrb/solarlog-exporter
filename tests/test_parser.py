@@ -1,14 +1,17 @@
 from datetime import datetime
+from pathlib import Path
 from unittest import TestCase
 
 from solarlog_exporter import settings
 from solarlog_exporter.parser import ConfigParser, DataParser
 from solarlog_exporter.utils import InverterList
 
+TEST_DIR = str(Path(__file__).parent)
+
 
 class TestConfigParser(TestCase):
     def setUp(self):
-        self._assets = "./assets/"
+        self._assets = TEST_DIR + "/assets/"
         self._config_parser = ConfigParser(self._assets + "base_vars.js")
 
     def test_get_power(self):
@@ -56,7 +59,7 @@ class TestConfigParser(TestCase):
 
 class TestDataParser(TestCase):
     def setUp(self):
-        self._assets = "./assets/"
+        self._assets = TEST_DIR + "/assets/"
 
         config_parser = ConfigParser(self._assets + "base_vars.js")
         self._inverter_list = config_parser.get_inverters()
