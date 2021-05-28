@@ -1,6 +1,7 @@
 # SolarLog Exporter to InfluxDB
 [![Main Branch CI](https://github.com/chrishrb/solarlog-exporter/actions/workflows/pipeline.yml/badge.svg)](https://github.com/chrishrb/solarlog-exporter/actions/workflows/pipeline.yml)
 [![Nightly Test](https://github.com/chrishrb/solarlog-exporter/actions/workflows/nightly.yml/badge.svg)](https://github.com/chrishrb/solarlog-exporter/actions/workflows/nightly.yml)
+[![Release](https://github.com/chrishrb/solarlog-exporter/actions/workflows/release.yml/badge.svg)](https://github.com/chrishrb/solarlog-exporter/actions/workflows/release.yml)
 
 This repository contains an exporter for SolarLog Monitoring Systems. The Script does the following operations:
 1. Get data from LOCAL
