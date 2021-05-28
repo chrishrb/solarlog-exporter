@@ -1,4 +1,6 @@
 # SolarLog Exporter to InfluxDB
+[![Version](https://img.shields.io/github/v/tag/chrishrb/solarlog-exporter?include_prereleases&style=plastic)](https://github.com/chrishrb/solarlog-exporter/releases)
+
 [![Main Branch CI](https://github.com/chrishrb/solarlog-exporter/actions/workflows/pipeline.yml/badge.svg)](https://github.com/chrishrb/solarlog-exporter/actions/workflows/pipeline.yml)
 [![Nightly Test](https://github.com/chrishrb/solarlog-exporter/actions/workflows/nightly.yml/badge.svg)](https://github.com/chrishrb/solarlog-exporter/actions/workflows/nightly.yml)
 [![Release](https://github.com/chrishrb/solarlog-exporter/actions/workflows/release.yml/badge.svg)](https://github.com/chrishrb/solarlog-exporter/actions/workflows/release.yml)
