@@ -1,8 +1,7 @@
 version: '2'
 services:
   solarlog-exporter:
-    build:
-      context: .
+    image: {$PROD_IMAGE}
     volumes:
       - ./tests/assets:/data
     command: -d /data

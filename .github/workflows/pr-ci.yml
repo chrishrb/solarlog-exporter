@@ -26,10 +26,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
-      - name: Test
+      - name: Build and Test
         id: docker_test
         uses: docker/build-push-action@v2
         with:
           builder: ${{ steps.buildx.outputs.name }}
           file: Dockerfile
-          target: test
