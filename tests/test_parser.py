@@ -46,7 +46,7 @@ class TestConfigParser(TestCase):
         self.assertEqual(self._config_parser.get_banner_3(), "banner row 3")
 
     def test_get_inverter_config(self):
-        inverter_config = [[['PAC7', '100001', 7800.0, 1.0, 'WR 1', 1.0, None, None, 0.0, None,
+        inverter_config = [[['PÄC7', '100001', 7800.0, 1.0, 'WR 1', 1.0, None, None, 0.0, None,
                              14.0, 0.0, 1.0, 1000.0, None], None],
                            [['PAC7', '100002', 7800.0, 1.0, 'WR 2', 1.0, None, None, 0.0, None,
                              14.0, 0.0, 1.0, 1000.0, None], None]]
