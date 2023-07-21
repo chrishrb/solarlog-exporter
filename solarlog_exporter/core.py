@@ -98,21 +98,31 @@ def start_ftp_import(
                     if is_import_file(file, last_record_time):
                         logging.debug("Read file %s", file)
                         data_parser.parse_ftp_file(ftp, path + "/" + file)
+
+                logging.debug("Daily and monthly data read..")
+
+                # Store it in Influx DB
+                datapoints = file_handler.chunks(
+                    inverters.get_inverter_datapoints_to_influx(), CHUNK_SIZE
+                )
+                for chunk in datapoints:
+                    influx_client.write_points(chunk)
+                    logging.debug("Datapoints in influxdb saved")
         else:
             for file in ftp.nlst(path):
                 if is_import_file(file, last_record_time):
                     logging.debug("Read file %s", file)
                     data_parser.parse_ftp_file(ftp, path + "/" + file)
 
-        logging.debug("Daily and monthly data read..")
+            logging.debug("Daily and monthly data read..")
 
-        # Store it in Influx DB
-        datapoints = file_handler.chunks(
-            inverters.get_inverter_datapoints_to_influx(), CHUNK_SIZE
-        )
-        for chunk in datapoints:
-            influx_client.write_points(chunk)
-            logging.debug("Datapoints in influxdb saved")
+            # Store it in Influx DB
+            datapoints = file_handler.chunks(
+                inverters.get_inverter_datapoints_to_influx(), CHUNK_SIZE
+            )
+            for chunk in datapoints:
+                influx_client.write_points(chunk)
+                logging.debug("Datapoints in influxdb saved")
 
 
 def changemon_ftp_directory(ftp: FTP, directory="./"):
