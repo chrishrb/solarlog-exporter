@@ -5,7 +5,7 @@ name: PR CI
 # integration tests
 on:
   pull_request:
-    branches: main
+    branches: [main]
 
 jobs:
   docker:
