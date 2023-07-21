@@ -85,15 +85,16 @@ def start_ftp_import(
         # Read Configs at start
         config_parser = ConfigParser()
         config_parser.parse_ftp_file(ftp, path + "/base_vars.js")
-        inverters = config_parser.get_inverters()
-        if not inverters:
-            raise Exception("No inverters in config found!")
-        logging.debug("Inverters read from config..")
 
         # Read Daily and Monthly Data
-        data_parser = DataParser(inverters, last_record_time)
         if mon_for_changes:
             for add in changemon_ftp_directory(ftp, path):
+                inverters = config_parser.get_inverters()
+                if not inverters:
+                    raise Exception("No inverters in config found!")
+                logging.debug("Inverters read from config..")
+                data_parser = DataParser(inverters, last_record_time)
+
                 for file in add:
                     if is_import_file(file, last_record_time):
                         logging.debug("Read file %s", file)
@@ -109,6 +110,12 @@ def start_ftp_import(
                     influx_client.write_points(chunk)
                     logging.debug("Datapoints in influxdb saved")
         else:
+            inverters = config_parser.get_inverters()
+            if not inverters:
+                raise Exception("No inverters in config found!")
+            logging.debug("Inverters read from config..")
+            data_parser = DataParser(inverters, last_record_time)
+
             for file in ftp.nlst(path):
                 if is_import_file(file, last_record_time):
                     logging.debug("Read file %s", file)
