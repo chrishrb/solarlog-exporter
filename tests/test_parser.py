@@ -12,13 +12,14 @@ TEST_DIR = str(Path(__file__).parent)
 class TestConfigParser(TestCase):
     def setUp(self):
         self._assets = TEST_DIR + "/assets/"
-        self._config_parser = ConfigParser(self._assets + "base_vars.js")
+        self._config_parser = ConfigParser()
+        self._config_parser.parse_file(self._assets + "base_vars.js")
 
     def test_get_power(self):
         self.assertEqual(self._config_parser.get_power(), "100 kwp")
 
     def test_get_title(self):
-        self.assertEqual(self._config_parser.get_title(), settings.SOLAR_LOG_SYSTEM)
+        self.assertEqual(self._config_parser.get_title(), settings.SOLAR_LOG_NAME)
 
     def test_get_group(self):
         # todo: add groups
@@ -61,7 +62,8 @@ class TestDataParser(TestCase):
     def setUp(self):
         self._assets = TEST_DIR + "/assets/"
 
-        config_parser = ConfigParser(self._assets + "base_vars.js")
+        config_parser = ConfigParser()
+        config_parser.parse_file(self._assets + "base_vars.js")
         self._inverter_list = config_parser.get_inverters()
         self._last_record_time = datetime.strptime("01.03.2021", "%d.%m.%Y")
 

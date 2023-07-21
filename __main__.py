@@ -1,52 +1,46 @@
 import logging
 import sys
-import time
 
-import click
-from watchdog.events import PatternMatchingEventHandler
-from watchdog.observers import Observer
+from solarlog_exporter import settings
+from solarlog_exporter.core import start_ftp_import, start_import
 
-from solarlog_exporter.core import start_import
-
-
-@click.command()
-@click.option('-v', '--verbose', is_flag=True, help="Debug output")
-@click.option('-o', '--observer', is_flag=True, help="Runs with watchdog observer, that scans the directory for new "
-                                                     "files")
-@click.option('-d', '--directory', required=True, type=click.Path(resolve_path=True), help="Directory that should be "
-                                                                                           "scanned for solarlog files")
-def main(verbose, observer, directory):
+def main():
     """
     Run main application with can interface
     """
     # Verbose output
-    if verbose is True:
+    if settings.VERBOSE is True:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
 
-    # watchdog
-    if observer is True:
-        patterns = ["*"]
-        ignore_patterns = None
-        ignore_directories = False
-        case_sensitive = True
+    if not settings.INFLUXDB_HOST or not settings.INFLUXDB_DB:
+        raise Exception('INFLUX_HOST or INFLUX_DB not defined!')
 
-        event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
-        event_handler.on_created = start_import(directory)
-        event_handler.on_modified = start_import(directory)
-        observer = Observer()
-        observer.schedule(event_handler, directory, recursive=True)
-        observer.start()
+    # scan directory
+    if settings.DIRECTORY:
+        start_import(
+            settings.DIRECTORY,
+            influx_host=settings.INFLUXDB_HOST,
+            influx_port=settings.INFLUXDB_PORT,
+            influx_username=settings.INFLUXDB_USERNAME,
+            influx_password=settings.INFLUXDB_PASSWORD,
+            influx_db=settings.INFLUXDB_DB,
+        )
 
-        try:
-            while True:
-                time.sleep(1)
-        finally:
-            observer.stop()
-            observer.join()
-    else:
-        start_import(directory)
+    # scan with ftp
+    if settings.FTP_DIRECTORY:
+        start_ftp_import(
+            settings.FTP_DIRECTORY,
+            influx_host=settings.INFLUXDB_HOST,
+            influx_port=settings.INFLUXDB_PORT,
+            influx_username=settings.INFLUXDB_USERNAME,
+            influx_password=settings.INFLUXDB_PASSWORD,
+            influx_db=settings.INFLUXDB_DB,
+            mon_for_changes=settings.FTP_MONITOR_FOR_CHANGES
+        )
+
+    raise Exception('One env variable of DIRECTORY or FTP_DIRECTORY must be defined!')
 
 
 if __name__ == "__main__":

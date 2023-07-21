@@ -1,16 +1,33 @@
-version: '2'
+version: '2.1'
 services:
-  solarlog-exporter:
-    image: chrishrb/solarlog-exporter:latest
-    container_name: solarlog-exporter
-    volumes:
-      - ./tests/assets:/data
+  influxdb:
+    image: influxdb:1.8.4
+    restart: always
+    container_name: solarlog_influxdb
     environment:
       - INFLUXDB_DB=solarlog
+    healthcheck:
+      test: "curl -f http://localhost:8086/ping"
+      interval: 10s
+      timeout: 10s
+      retries: 5
     networks:
-      - solarlog_monitoring
+      - solarlog
+
+  solarlog-exporter:
+    image: chrishrb/solarlog-exporter:latest
+    restart: unless-stopped
+    container_name: solarlog_exporter
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - INFLUXDB_HOST=influxdb
+      - INFLUXDB_DB=solarlog
+    networks:
+      - solarlog
 
 networks:
-  monitoring:
-    external:
-      name: solarlog_monitoring
+  solarlog:

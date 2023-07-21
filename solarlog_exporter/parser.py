@@ -1,6 +1,9 @@
+from ftplib import FTP
+import ftplib
 import logging
 import os
 from abc import abstractmethod
+from typing import List
 
 import pyjsparser
 
@@ -16,13 +19,23 @@ class Parser:
 
     def parse_file(self, file_path):
         if not os.path.isfile(file_path):
-            logging.error("File is not under path %s", self)
+            logging.error("File is not under path %s", file_path)
             return
 
         file = open(file_path, "r", encoding='utf-8')
         for line in file:
             self._parse_line(line)
         file.close()
+
+    def parse_ftp_file(self, ftp: FTP, ftp_file_path: str):
+        try:
+            string_list: List[str] = []
+            ftp.retrlines(f'RETR {ftp_file_path}', string_list.append)
+            for line in string_list:
+                self._parse_line(line)
+        except ftplib.error_perm:
+            logging.error("File is not under path %s", ftp_file_path)
+            return
 
     @abstractmethod
     def _parse_line(self, line):
@@ -34,9 +47,8 @@ class ConfigParser(Parser):
     Parser for config file (base_vars.js)
     """
 
-    def __init__(self, config_path):
+    def __init__(self):
         self._config = {}
-        self.parse_file(config_path)
 
     def _parse_line(self, line):
         _parsed_config = pyjsparser.parse(line)
@@ -98,7 +110,7 @@ class ConfigParser(Parser):
         return self._config["HPLeistung"]
 
     def get_title(self):
-        return settings.SOLAR_LOG_SYSTEM
+        return settings.SOLAR_LOG_NAME
 
     def get_operator(self):
         return self._config["HPBetreiber"]
