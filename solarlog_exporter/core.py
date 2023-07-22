@@ -144,6 +144,7 @@ def changemon_ftp_directory(ftp: FTP, directory="./"):
 
         # read current date again
         add.add('min_day.js')
+        add.add('days.js')
 
         if add:
             yield add
