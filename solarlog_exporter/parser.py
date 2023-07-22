@@ -138,7 +138,7 @@ class ConfigParser(Parser):
             return None
 
         for group in self._config["AnlagenGrp"]:
-            if (inverter_index+1) in group[1]:
+            if inverter_index+1 in group[1]:
                 return group[0][0]
 
     def get_inverter_config(self):
