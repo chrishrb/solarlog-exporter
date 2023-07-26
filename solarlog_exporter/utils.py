@@ -1,6 +1,8 @@
+from operator import itemgetter
 import re
 from abc import abstractmethod
 from datetime import datetime
+from typing import Optional
 
 import pytz as pytz
 
@@ -27,40 +29,6 @@ class FileType:
             return None
 
 
-class InverterList:
-    """
-    List of all inverters found in the config
-    """
-
-    def __init__(self, inverter_config, system):
-        self.inverters = []
-
-        if len(inverter_config) == 0:
-            raise ValueError("No inverter in config found")
-
-        if not system:
-            raise ValueError("No name of system provided")
-
-        for inverter in inverter_config:
-            self.inverters.append(Inverter(inverter, system))
-
-    def get_inverter(self, key):
-        if key < 0 or key >= self.get_number_of_inverters():
-            return None
-        return self.inverters[key]
-
-    def get_number_of_inverters(self):
-        return len(self.inverters)
-
-    def get_inverter_datapoints_to_influx(self):
-        datapoints = []
-
-        for inverter in self.inverters:
-            datapoints += inverter.get_datapoints_to_influx()
-
-        return datapoints
-
-
 class Inverter:
     """
     Inverter Object
@@ -80,8 +48,6 @@ class Inverter:
             self.group = inverter_config[1]
         else:
             self.group = None
-        self.sum_pdc = 0
-        self.efficiency = 0
 
     def add_datapoint(self, datapoint, last_record_time):
         if datapoint.date_time.date() < last_record_time.date():
@@ -109,10 +75,44 @@ class Inverter:
             if datapoint_min.get_date_time_as_datestring() in self.datapoints_day:
                 self.datapoints_day[
                     datapoint_min.get_date_time_as_datestring()
-                ].add_pdc(datapoint_min.date_time, datapoint_min.pdc)
+                ].add_min_datapoint(datapoint_min.date_time, datapoint_min.pac, datapoint_min.pdc, datapoint_min.eday)
 
         for _, value in self.datapoints_day.items():
             value.calculate_values()
+
+
+class InverterList:
+    """
+    List of all inverters found in the config
+    """
+
+    def __init__(self, inverter_config, system):
+        self.inverters = []
+
+        if len(inverter_config) == 0:
+            raise ValueError("No inverter in config found")
+
+        if not system:
+            raise ValueError("No name of system provided")
+
+        for inverter in inverter_config:
+            self.inverters.append(Inverter(inverter, system))
+
+    def get_inverter(self, key) -> Optional[Inverter]:
+        if key < 0 or key >= self.get_number_of_inverters():
+            return None
+        return self.inverters[key]
+
+    def get_number_of_inverters(self):
+        return len(self.inverters)
+
+    def get_inverter_datapoints_to_influx(self):
+        datapoints = []
+
+        for inverter in self.inverters:
+            datapoints += inverter.get_datapoints_to_influx()
+
+        return datapoints
 
 
 class Datapoint:
@@ -152,10 +152,10 @@ class MinDatapoint(Datapoint):
         self.date_time = self._timezone.localize(
             datetime.strptime(min_time, "%d.%m.%y %H:%M:%S")
         )
-        self.pac = int(pac)
-        self.pdc = int(pdc)
-        self.eday = int(eday)
-        self.udc = int(udc)
+        self.pac = float(pac)
+        self.pdc = float(pdc)
+        self.eday = float(eday)
+        self.udc = float(udc)
         self.temperature = int(temperature)
 
     def get_datapoint_to_influx(self, inverter):
@@ -189,10 +189,10 @@ class DayDatapoint(Datapoint):
         self.date_time = self._timezone.localize(
             datetime.strptime(day_time, "%d.%m.%y")
         )
-        self.pac = int(pac)
+        self.pac = float(pac)
         self._pdc_min_data = []
         self.efficiency = float(0)
-        self.pdc = int(0)
+        self.pdc = float(0)
 
     def get_datapoint_to_influx(self, inverter):
         return {
@@ -206,22 +206,25 @@ class DayDatapoint(Datapoint):
             "fields": {"Pac": self.pac, "Pdc": self.pdc, "efficiency": self.efficiency},
         }
 
-    def add_pdc(self, time, pdc):
-        self._pdc_min_data.append([time, pdc])
+    def add_min_datapoint(self, time, pac, pdc, eday):
+        self._pdc_min_data.append({"time": time, "pac": pac, "pdc": pdc, "eday": eday})
 
-    # todo: does not work as expected
     def calculate_values(self):
-        total_ws = 0.0
-        total_t = 0
+        ist_ertrag_ac_yield = self._pdc_min_data[0]['eday']
+        ist_ertrag_ac = 0.0
+        pdc = 0.0
 
         for i in range(1, len(self._pdc_min_data)):
-            dt = self._pdc_min_data[i][0] - self._pdc_min_data[i - 1][0]
-            dt = abs(dt.total_seconds())
-            average = (self._pdc_min_data[i][1] + self._pdc_min_data[i - 1][1]) / 2
-            total_ws += average * dt
-            total_t += dt
+            dt = (self._pdc_min_data[i]['time'] - self._pdc_min_data[i - 1]['time'])
+            hour_diff = abs(dt.total_seconds()) / (60.0 * 60.0)
+            pdc += self._pdc_min_data[i]['pdc'] * hour_diff
+            ist_ertrag_ac += self._pdc_min_data[i]['pac'] * hour_diff
 
-        # todo: if pdc greater than pac -> adjust pdc and efficiency
-        self.pdc = int(total_ws / 3600)
+        if self.pac == 0:
+            factor = 1.0
+        else:
+            factor = ist_ertrag_ac_yield / ist_ertrag_ac
+
+        self.pdc = round(pdc * factor, 0)
         if self.pdc != 0 and self.pac != 0:
             self.efficiency = round((self.pac / self.pdc), 3)
