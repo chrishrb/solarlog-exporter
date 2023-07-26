@@ -51,9 +51,5 @@ After that you can create fancy dashboards for grafana and monitor your PV-Syste
 ./bin/entrypoint
 ```
 
-## Todo
-- add target value
-- add actual value in percent
-
 ## Important:
 Use with caution! If you find any issues or improvements feel free to add pull requests or an issue!

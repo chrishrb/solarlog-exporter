@@ -220,7 +220,7 @@ class DayDatapoint(Datapoint):
             pdc += self._pdc_min_data[i]['pdc'] * hour_diff
             ist_ertrag_ac += self._pdc_min_data[i]['pac'] * hour_diff
 
-        if self.pac == 0:
+        if ist_ertrag_ac == 0:
             factor = 1.0
         else:
             factor = ist_ertrag_ac_yield / ist_ertrag_ac
